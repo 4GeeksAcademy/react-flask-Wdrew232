@@ -1,66 +1,91 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react";
 import rigoImageUrl from "../assets/img/rigo-baby.jpg";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
-
+import { useNavigate } from "react-router-dom";
 
 export const Home = () => {
+    const navigate = useNavigate();
+    const { store, dispatch } = useGlobalReducer();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [signupEmail, setSignupEmail] = useState("");
+    const [signupPassword, setSignupPassword] = useState("");
 
-	const { store, dispatch } = useGlobalReducer()
-	const [email,setEmail] = useState("")
-	const [password,setPassword] = useState("")
+    const loadMessage = async () => {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL;
+        if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file");
 
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
+        const response = await fetch(`${backendUrl}/api/hello`);
+        const data = await response.json();
 
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
+        if (response.ok) dispatch({ type: "set_hello", payload: data.message });
 
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
+        return data;
+    };
 
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
+    const login = async () => {
+        const option = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                email: email,
+                password: password })
+        };
 
-			return data
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/login`, option);
+        if (!response.ok) throw new Error("Invalid login credentials");
 
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
+        else{
+            const data = await response.json();
+            dispatch({ type: "updateToken", payload: data.token_value });
+            console.log(data.token_value, "this is my token after login");
+            navigate("/demo")
+        }
 
-	}
-	const login = ()=>{
-		const option={
-			method: "POST",
-			headers:{
-				"Content-Type": "application/json"
-			},
-			body: JSON.stringify({
-				"email" :email,
-				"password": password
-			  })
-		}
-		fetch(import.meta.env.VITE_BACKEND_URL+"api/login", option)
+        
+    };
 
-		.then((resp)=>{
-		return resp.json()
-		})
+    const signup = async () => {
+        const option = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                 email: signupEmail, 
+                 password: signupPassword })
+        };
 
-		.then((data)=> console.log(data, "this is my agenda")) 
-		} 
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/signup`, option);
+        if (!response.ok) throw new Error("Signup failed");
 
-	useEffect(() => {
-		loadMessage()
-	}, [])
+        const data = await response.json();
+        dispatch({ type: "updateToken", payload: data.token_value });
+        console.log(data.token_value, "this is my token after signup");
+    };
 
-	return (
-		<div>
-			<input onChange={(e) => setEmail(e.target.value)} value={email} type="text" placeholder="Email" />
-            <input onChange={(e) => setPassword(e.target.value)} value={password}  type="text" placeholder="Password" />
-			<button onClick={()=>
-				login()}>Login</button>
 
-		</div>
-	);
-}; 
+    useEffect(() => {
+        loadMessage();
+    }, []);
+
+    return (
+        <div>
+            <div className="login">
+                <input onChange={(e) => setEmail(e.target.value)} value={email} type="text" placeholder="Email" />
+                <input onChange={(e) => setPassword(e.target.value)} value={password} type="password" placeholder="Password" />
+                <button onClick={login}>Login</button>
+            </div>
+
+            <div className="signup">
+                <input onChange={(e) => setSignupEmail(e.target.value)} value={signupEmail} type="text" placeholder="Signup Email" />
+                <input onChange={(e) => setSignupPassword(e.target.value)} value={signupPassword} type="password" placeholder="Signup Password" />
+                <button onClick={signup}>Sign Up</button>
+            </div>
+        </div>
+    );
+};
+// how to log in and go to a different page
+// 1. go to Routes.jsx
+// 2. add navigate PATH TO login in then response after dispatch
+// 3. add a "private page" with the instructions above
+// 4. go to Routes.jsx
+// login, refresh as it stays logged in with sessions

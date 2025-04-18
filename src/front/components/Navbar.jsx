@@ -8,7 +8,17 @@ export const Navbar = () => {
 			<div className="container">
 
 				<div>
-					{store.token !== null ? "your logged in!!!": "your not logged in!!!"}
+					{
+					store.token !== null ? "your logged in!!!": "your not logged in"
+					}
+
+					<div>
+						<button onClick={()=>{
+							dispatch({ type: "updateToken", payload: null });
+						}} className="logout">
+							Logout
+						</button>
+					</div>
 				</div>
 
 				<Link to="/">

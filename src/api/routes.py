@@ -24,7 +24,7 @@ def handle_login():
     if not check_password_hash(find_user.password,password):
           return jsonify("login failed")
 
-    token=create_access_token(identity = email)
+    token = create_access_token(identity = email)
     return jsonify(token_value = token), 200
 
    
